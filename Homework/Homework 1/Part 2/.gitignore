@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+
+ros_ws/build/
+ros_ws/install/
+ros_ws/log/
+
+.idea/
+.vscode/
+*.swp
