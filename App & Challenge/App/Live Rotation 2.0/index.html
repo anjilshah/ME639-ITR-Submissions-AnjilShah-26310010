@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rotation Orbit — 3D Rotation Matrix Explorer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <div class="brand-title">ROTATION ORBIT</div>
+          <div class="brand-subtitle">3D Rotation Matrix Explorer</div>
+        </div>
+      </div>
+      <div class="status">
+        <span class="pulse"></span>
+        LIVE
+        <span class="divider"></span>
+        GROUND FRAME FIXED · AIRCRAFT FREE
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="viewport-card">
+        <div class="viewport-head">
+          <div>
+            <span class="kicker">SPATIAL VIEW</span>
+            <h1>Aircraft body frame in 3D space</h1>
+          </div>
+          <button id="resetBtn" class="ghost-btn">RESET ORIENTATION</button>
+        </div>
+
+        <div id="scene"></div>
+
+        <div class="scene-overlay top-left">
+          <div class="legend-row"><span class="legend-dot ground"></span> Ground / fixed</div>
+          <div class="legend-row"><span class="legend-dot body"></span> Aircraft / movable + rotatable</div>
+          <div class="legend-row"><span class="legend-dot plane"></span> Drag plane follows camera</div>
+        </div>
+
+        <div class="joystick-panel">
+          <div class="joystick-title">3D ATTITUDE JOYSTICK</div>
+          <div id="joystick" class="joystick" aria-label="3D attitude joystick">
+            <div class="joystick-cross horizontal"></div>
+            <div class="joystick-cross vertical"></div>
+            <div class="joystick-ring"></div>
+            <div id="joystickKnob" class="joystick-knob"><span></span></div>
+          </div>
+          <div class="joystick-labels">
+            <span>YAW −</span><span>YAW +</span>
+            <span>PITCH +</span><span>PITCH −</span>
+          </div>
+          <div class="joystick-help">Aircraft drag = free 3D-plane translation · joystick = yaw/pitch</div>
+          <div class="roll-row">
+            <span>ROLL</span>
+            <button id="rollLeft" class="roll-button" type="button">↺</button>
+            <b id="rollMini">0.0°</b>
+            <button id="rollRight" class="roll-button" type="button">↻</button>
+          </div>
+          <div class="direct-input-title">DIRECT AXIS INPUT · DEGREES</div>
+          <div class="xyz-inputs">
+            <label><span>X</span><input id="xInput" type="number" step="0.1" value="0"></label>
+            <label><span>Y</span><input id="yInput" type="number" step="0.1" value="0"></label>
+            <label><span>Z</span><input id="zInput" type="number" step="0.1" value="0"></label>
+          </div>
+          <button id="applyXYZ" class="apply-xyz" type="button">APPLY X / Y / Z</button>
+        </div>
+
+        <div id="bodyLocation" class="body-location-tag">AIRCRAFT POSITION [ 2.800, 1.150, 1.900 ]</div>
+
+        <div class="axis-readout">
+          <div class="axis-title">BODY AXES IN GROUND FRAME</div>
+          <div class="axis-line"><b class="x">Xᵦ</b><span id="xAxis">[ 1.000, 0.000, 0.000 ]</span></div>
+          <div class="axis-line"><b class="y">Yᵦ</b><span id="yAxis">[ 0.000, 1.000, 0.000 ]</span></div>
+          <div class="axis-line"><b class="z">Zᵦ</b><span id="zAxis">[ 0.000, 0.000, 1.000 ]</span></div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <section class="card position-card">
+          <div class="card-head">
+            <div>
+              <span class="kicker">SPATIAL POSITION</span>
+              <h2>Aircraft origin</h2>
+            </div>
+          </div>
+          <div class="position-value" id="positionValue">[ 2.800, 1.150, 1.900 ]</div>
+          <div class="position-note">Drag the aircraft in the 3D view. Translation is not locked to the ground X/Y/Z axes.</div>
+        </section>
+
+        <section class="card attitude">
+          <div class="card-head">
+            <div>
+              <span class="kicker">ATTITUDE</span>
+              <h2>Euler orientation</h2>
+            </div>
+            <span class="order-badge">ZYX</span>
+          </div>
+
+          <div class="angle-grid">
+            <div class="angle">
+              <span>ROLL</span>
+              <strong id="rollValue">0.0°</strong>
+              <small>φ · body Z</small>
+            </div>
+            <div class="angle">
+              <span>PITCH</span>
+              <strong id="pitchValue">0.0°</strong>
+              <small>θ · body Y</small>
+            </div>
+            <div class="angle">
+              <span>YAW</span>
+              <strong id="yawValue">0.0°</strong>
+              <small>ψ · ground Z</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="card matrix-card">
+          <div class="card-head">
+            <div>
+              <span class="kicker">LIVE MATRIX</span>
+              <h2>R = Rz(ψ) Ry(θ) Rx(φ)</h2>
+            </div>
+            <button id="copyBtn" class="mini-btn">COPY</button>
+          </div>
+
+          <div class="matrix-bracket">
+            <div id="matrix" class="matrix">
+              <span>1.000</span><span>0.000</span><span>0.000</span>
+              <span>0.000</span><span>1.000</span><span>0.000</span>
+              <span>0.000</span><span>0.000</span><span>1.000</span>
+            </div>
+          </div>
+
+          <div class="matrix-note">
+            Each column is a body axis expressed in the fixed ground frame.
+          </div>
+        </section>
+
+        <section class="card diagnostics">
+          <div class="card-head">
+            <div>
+              <span class="kicker">VALIDATION</span>
+              <h2>Rotation checks</h2>
+            </div>
+          </div>
+          <div class="check-row">
+            <span>det(R)</span>
+            <strong id="det">1.000000</strong>
+          </div>
+          <div class="check-row">
+            <span>‖RᵀR − I‖F</span>
+            <strong id="orth">0.000000</strong>
+          </div>
+          <div class="valid"><span>✓</span> Proper orthonormal rotation</div>
+        </section>
+
+        <section class="card controls-card">
+          <div class="card-head">
+            <div>
+              <span class="kicker">PRECISION CONTROL</span>
+              <h2>Fine adjustment</h2>
+            </div>
+          </div>
+
+          <div class="dial-grid">
+            <div class="dial-control">
+              <div class="dial" data-axis="roll">
+                <div class="dial-ring"></div>
+                <div class="dial-tick"></div>
+                <div class="dial-center">↻</div>
+              </div>
+              <span>ROLL</span>
+              <small>drag ring</small>
+            </div>
+
+            <div class="dial-control">
+              <div class="dial" data-axis="pitch">
+                <div class="dial-ring"></div>
+                <div class="dial-tick"></div>
+                <div class="dial-center">↕</div>
+              </div>
+              <span>PITCH</span>
+              <small>drag ring</small>
+            </div>
+
+            <div class="dial-control">
+              <div class="dial" data-axis="yaw">
+                <div class="dial-ring"></div>
+                <div class="dial-tick"></div>
+                <div class="dial-center">↔</div>
+              </div>
+              <span>YAW</span>
+              <small>drag ring</small>
+            </div>
+          </div>
+        </section>
+      </aside>
+    
+        <!-- =========================================================
+             VERSION 2 ADD-ON — ROTATION COMPOSITION PROPERTY
+             Existing dashboard above is intentionally unchanged.
+             ========================================================= -->
+        <section class="card v2-proof-card">
+          <div class="card-head">
+            <div>
+              <span class="kicker">VERSION 2 · NEW ADD-ON</span>
+              <h2>Rotation Composition Property</h2>
+            </div>
+            <span class="v2-property-badge">R(X × Y)</span>
+          </div>
+
+          <div class="v2-equation">
+            <span>R(X × Y)</span>
+            <b>=</b>
+            <span>R(X) · R(Y)</span>
+          </div>
+
+          <div class="v2-help">
+            Y is applied first, then X. Change the six angles below and
+            watch the proof update live.
+          </div>
+
+          <div class="v2-controls">
+            <div class="v2-rotation-box">
+              <div class="v2-box-title">
+                <span>ROTATION X</span><small>SECOND</small>
+              </div>
+              <div class="v2-input-grid">
+                <label><span>ROLL</span><input id="v2-x-roll" type="number" step="1" value="30"></label>
+                <label><span>PITCH</span><input id="v2-x-pitch" type="number" step="1" value="20"></label>
+                <label><span>YAW</span><input id="v2-x-yaw" type="number" step="1" value="45"></label>
+              </div>
+            </div>
+
+            <div class="v2-rotation-box">
+              <div class="v2-box-title">
+                <span>ROTATION Y</span><small>FIRST</small>
+              </div>
+              <div class="v2-input-grid">
+                <label><span>ROLL</span><input id="v2-y-roll" type="number" step="1" value="10"></label>
+                <label><span>PITCH</span><input id="v2-y-pitch" type="number" step="1" value="40"></label>
+                <label><span>YAW</span><input id="v2-y-yaw" type="number" step="1" value="60"></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="v2-proof-grid">
+            <div class="v2-matrix-panel">
+              <div class="v2-panel-title">R(X)</div>
+              <div class="v2-matrix-bracket"><div id="v2-matrix-x" class="v2-matrix"></div></div>
+            </div>
+
+            <div class="v2-multiply">×</div>
+
+            <div class="v2-matrix-panel">
+              <div class="v2-panel-title">R(Y)</div>
+              <div class="v2-matrix-bracket"><div id="v2-matrix-y" class="v2-matrix"></div></div>
+            </div>
+
+            <div class="v2-equals">=</div>
+
+            <div class="v2-matrix-panel v2-result-panel">
+              <div class="v2-panel-title">R(X) · R(Y)</div>
+              <div class="v2-matrix-bracket"><div id="v2-matrix-product" class="v2-matrix"></div></div>
+            </div>
+
+            <div class="v2-direct-panel">
+              <div class="v2-panel-title">DIRECT R(X × Y)</div>
+              <div class="v2-matrix-bracket"><div id="v2-matrix-direct" class="v2-matrix"></div></div>
+            </div>
+          </div>
+
+          <div class="v2-verification">
+            <div>
+              <span>MATRIX DIFFERENCE ‖R(X)R(Y) − R(X × Y)‖F</span>
+              <b id="v2-error">0.000000</b>
+            </div>
+            <div id="v2-status" class="v2-status-ok">✓ PROPERTY VERIFIED</div>
+          </div>
+        </section>
+
+    </main>
+
+    <footer>
+      <span>ROTATION ORBIT · Interactive rigid-body orientation</span>
+      <span>Right-handed coordinates · angles in degrees</span>
+    </footer>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
